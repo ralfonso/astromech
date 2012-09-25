@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/misc.atom.xml" rel="self"></link><id>/</id><updated>2012-09-24T22:54:17+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/24/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-24T22:54:17+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-24:2012/09/24/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/misc.atom.xml" rel="self"></link><id>/</id><updated>2012-09-24T22:57:27+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/24/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-24T22:57:27+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-24:2012/09/24/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
 &lt;div class="section" id="backend-stack"&gt;
 &lt;h2&gt;Backend&amp;nbsp;Stack&lt;/h2&gt;
 &lt;ul class="simple"&gt;
@@ -66,7 +66,7 @@ gets to see the slow loading times. It&amp;#8217;s an emotionless robot that con
 &lt;/div&gt;
 &lt;div class="section" id="conclusion"&gt;
 &lt;h2&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;This setup means that a normal &lt;span class="caps"&gt;API&lt;/span&gt; request from a user viewing the FuelStream will &lt;em&gt;never&lt;/em&gt; have to view uncached content.
+&lt;p&gt;This setup means that a normal &lt;span class="caps"&gt;API&lt;/span&gt; request from a user viewing the FuelStream will &lt;em&gt;never&lt;/em&gt; hit uncached content and be forced to wait.
 Response times went from 10-20 seconds under load to 100ms or less with the cache&amp;nbsp;enabled.&lt;/p&gt;
 &lt;/div&gt;
 </summary></entry></feed>
