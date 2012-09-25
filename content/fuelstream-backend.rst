@@ -59,7 +59,7 @@ geographically.
 Keeping *page* requests from hitting the server was a bit tougher. We use Amazon's Elastic Load Balancer to transparently proxy requests
 to one of four web servers. On those web servers, we use `Varnish Cache`_ as a front-end cache. Varnish works as a caching proxy. Once a page is requested
 and rendered, it's stored in RAM for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
-since PHP is not invoked and data does not have to be retrieved from the database, it can be displayed directly from RAM.
+since PHP is not invoked and data does not have to be retrieved from the database, it can be served directly from RAM.
 
 Since our API responses take so long to generate we have to be very aggressive with our caching.  The solution here was to "warm" the 
 cache automatically, making sure that no client traffic ever hits uncached content.
