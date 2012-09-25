@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section id="content" class="body">
+  <aside>
+    <h2>Recent</h2>
+    {%- for article in articles %}
+      {{ article.date.strftime("%b %d") }}
+      &middot;
+      <a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark" title="Permalink to {{ article.title}}">{{ article.title }}</a>
+    {%- endfor %}
+  </aside>
+
+  <article class="hentry">
+    <header>
+      <h2 class="entry-title">
+        <a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark"
+           title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a></h2>
+    </header>
+    <section class="post-info">
+      <abbr class="published" title="{{ article.date.isoformat() }}">
+        {{ article.locale_date }}
+      </abbr>
+    </section><!-- /.post-info -->
+    <div class="entry-content">
+      {{ article.content }}
+    </div><!-- /.entry-content -->
+  </article>
+</section>
+{% endblock %}
