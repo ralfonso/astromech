@@ -82,7 +82,7 @@ gets to see the slow loading times. It's an emotionless robot that constantly su
 Conclusion
 ----------
 This setup means that a normal API request from a user viewing the FuelStream will *never* hit uncached content and be forced to wait.
-Response times went from 10-20 seconds under load to 100ms or less with the cache enabled.
+Response times went from a dismal 10-20 seconds under load to 100ms or less with the cache enabled.
 
 .. _Thomas Reynolds': http://awardwinningfjords.com/2012/09/23/fuelstream.html
 .. _Nike+ FuelStream: http://gameonworld.nike.com/#en_US/fuelstream
