@@ -10,6 +10,7 @@ Backend Stack
 * `Varnish Cache`_
 * nginx_
 * `Expression Engine`_
+* `PHP`_ (FPM, with APC enabled)
 * `GlusterFS`_
 * `Amazon RDS`_
 
@@ -23,7 +24,7 @@ ExpressionEngine's performance is not exceptional. It uses an EAV_, which provid
 SQL queries to generate content, especially when the content is used to create a JSON API with hundreds of records rather than 
 single pages, such as would be seen in a vanilla CMS with "page" objects. EAVs also have trouble taking advantage of database 
 joins, which are almost a necessity when building complex queries that need to perform well. We were faced with a serious
-problem since our API requests were taking close to 20 seconds to complete when the site was under load.
+problem since our API requests were taking close to **20 seconds** to complete when the site was under load.
 
 We used `Amazon RDS`_ for the database. Nothing special there, you pay a little more to have Amazon manage the database OS, optimization, 
 replication, and you get some nice tools to do point-in-time restoration. If you're using MySQL and EC2, it's a no-brainer.
@@ -40,7 +41,7 @@ A common issue when your webapp outgrows a single server setup is how to distrib
 ways to solve this including directing all content-generating traffic to a single server and replicating the assets via rsync. I've
 found that using `GlusterFS`_ provides a very robust and reliable system for file replication.
 
-GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and writes
+GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and file writes
 to that share are immediately replicated to both GlusterFS servers. Every asset stored in Gluster essentially has two physical copies, one
 on each file server. If one of them goes down, the GlusterFS client (on the web-servers) is smart enough to switch to the other
 server. When the server comes back up, it heals itself from the active server. 
@@ -57,9 +58,14 @@ also has the very cool benefit of distributing your content around the world, so
 geographically.
 
 Keeping *page* requests from hitting the server was a bit tougher. We use Amazon's Elastic Load Balancer to transparently proxy requests
-to one of four web servers. On those web servers, we use `Varnish Cache`_ as a front-end cache. Varnish works as a caching proxy. Once a page is requested
+to one of four web servers. On those web servers, `Varnish Cache`_ sits in front of nginx and works as a caching proxy. Once a page is requested
 and rendered, it's stored in RAM for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
 since PHP is not invoked and data does not have to be retrieved from the database, it can be served directly from RAM.
+
+:: 
+
+    uncached request: client -> Varnish -> nginx -> PHP -> database
+      cached request: client -> Varnish (RAM cache)
 
 Since our API responses take so long to generate we have to be very aggressive with our caching.  The solution here was to "warm" the 
 cache automatically, making sure that no client traffic ever hits uncached content.
@@ -88,3 +94,4 @@ Response times went from 10-20 seconds under load to 100ms or less with the cach
 .. _Amazon CloudFront: http://aws.amazon.com/cloudfront/
 .. _Amazon Elastic Load Balancer: http://aws.amazon.com/elasticloadbalancing/
 .. _Amazon RDS: http://aws.amazon.com/rds/
+.. _PHP: http://www.php.net/

@@ -56,7 +56,12 @@ article.hentry {
 }
 
 pre {
-  margin: 2em 1em 2em 4em;
+  margin:10px;
+  padding: 2em 1em 2em 4em;
+}
+
+pre.literal-block {
+  background-color:#efefef;
 }
 
 header#banner {

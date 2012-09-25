@@ -41,7 +41,7 @@
     <li><article class="hentry">    
       <header> <h2 class="entry-title"><a href="./2012/09/24/nike-fuelstream-backend-stack.html" rel="bookmark" title="Permalink to Nike+ FuelStream Backend&nbsp;Stack">Nike+ FuelStream Backend&nbsp;Stack</a></h2> </header>
       <section class="post-info">
-        <abbr class="published" title="2012-09-24T22:59:21"> Mon 24 September 2012 </abbr>
+        <abbr class="published" title="2012-09-24T23:09:52"> Mon 24 September 2012 </abbr>
       </section>
       <div class="entry-content"> <p>This is a companion to <a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html">Thomas Reynolds&#8217;</a> article outlining the front-end stack for The <a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream">Nike+ FuelStream</a>&nbsp;site.</p>
 <div class="section" id="backend-stack">
@@ -52,6 +52,7 @@
 <li><a class="reference external" href="https://www.varnish-cache.org/">Varnish&nbsp;Cache</a></li>
 <li><a class="reference external" href="http://nginx.org/">nginx</a></li>
 <li><a class="reference external" href="http://expressionengine.com/">Expression&nbsp;Engine</a></li>
+<li><a class="reference external" href="http://www.php.net/"><span class="caps">PHP</span></a> (<span class="caps">FPM</span>, with <span class="caps">APC</span>&nbsp;enabled)</li>
 <li><a class="reference external" href="http://www.gluster.org/">GlusterFS</a></li>
 <li><a class="reference external" href="http://aws.amazon.com/rds/">Amazon&nbsp;<span class="caps">RDS</span></a></li>
 </ul>
@@ -65,7 +66,7 @@ it&#8217;s more than a <span class="caps">CMS</span>, it&#8217;s an easy-to-prov
 <span class="caps">SQL</span> queries to generate content, especially when the content is used to create a <span class="caps">JSON</span> <span class="caps">API</span> with hundreds of records rather than
 single pages, such as would be seen in a vanilla <span class="caps">CMS</span> with &#8220;page&#8221; objects. EAVs also have trouble taking advantage of database
 joins, which are almost a necessity when building complex queries that need to perform well. We were faced with a serious
-problem since our <span class="caps">API</span> requests were taking close to 20 seconds to complete when the site was under&nbsp;load.</p>
+problem since our <span class="caps">API</span> requests were taking close to <strong>20 seconds</strong> to complete when the site was under&nbsp;load.</p>
 <p>We used <a class="reference external" href="http://aws.amazon.com/rds/">Amazon <span class="caps">RDS</span></a> for the database. Nothing special there, you pay a little more to have Amazon manage the database <span class="caps">OS</span>, optimization,
 replication, and you get some nice tools to do point-in-time restoration. If you&#8217;re using MySQL and <span class="caps">EC2</span>, it&#8217;s a&nbsp;no-brainer.</p>
 <p>All components of the cluster have full&nbsp;redundancy:</p>
@@ -80,7 +81,7 @@ replication, and you get some nice tools to do point-in-time restoration. If you
 <p>A common issue when your webapp outgrows a single server setup is how to distribute assets among the servers. There are several
 ways to solve this including directing all content-generating traffic to a single server and replicating the assets via rsync. I&#8217;ve
 found that using <a class="reference external" href="http://www.gluster.org/">GlusterFS</a> provides a very robust and reliable system for file&nbsp;replication.</p>
-<p>GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and writes
+<p>GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and file writes
 to that share are immediately replicated to both GlusterFS servers. Every asset stored in Gluster essentially has two physical copies, one
 on each file server. If one of them goes down, the GlusterFS client (on the web-servers) is smart enough to switch to the other
 server. When the server comes back up, it heals itself from the active&nbsp;server.</p>
@@ -94,9 +95,13 @@ make. This means offloading static asset requests for images and <span class="ca
 the client through CloudFront and it caches your content for you. Once it&#8217;s on CloudFront, it never has to hit your servers again. <span class="caps">CF</span>
 also has the very cool benefit of distributing your content around the world, so users get routed to a server that&#8217;s close to them&nbsp;geographically.</p>
 <p>Keeping <em>page</em> requests from hitting the server was a bit tougher. We use Amazon&#8217;s Elastic Load Balancer to transparently proxy requests
-to one of four web servers. On those web servers, we use <a class="reference external" href="https://www.varnish-cache.org/">Varnish Cache</a> as a front-end cache. Varnish works as a caching proxy. Once a page is requested
+to one of four web servers. On those web servers, <a class="reference external" href="https://www.varnish-cache.org/">Varnish Cache</a> sits in front of nginx and works as a caching proxy. Once a page is requested
 and rendered, it&#8217;s stored in <span class="caps">RAM</span> for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
 since <span class="caps">PHP</span> is not invoked and data does not have to be retrieved from the database, it can be served directly from&nbsp;<span class="caps">RAM</span>.</p>
+<pre class="literal-block">
+uncached request: client -&gt; Varnish -&gt; nginx -&gt; PHP -&gt; database
+  cached request: client -&gt; Varnish (RAM cache)
+</pre>
 <p>Since our <span class="caps">API</span> responses take so long to generate we have to be very aggressive with our caching.  The solution here was to &#8220;warm&#8221; the
 cache automatically, making sure that no client traffic ever hits uncached&nbsp;content.</p>
 <p>Note that FuelStream has a huge benefit over most web apps since it&#8217;s session-less. There is no concept of a user-login or history.

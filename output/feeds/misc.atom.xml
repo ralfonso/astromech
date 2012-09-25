@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/misc.atom.xml" rel="self"></link><id>/</id><updated>2012-09-24T22:59:21+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/24/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-24T22:59:21+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-24:2012/09/24/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/misc.atom.xml" rel="self"></link><id>/</id><updated>2012-09-24T23:09:52+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/24/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-24T23:09:52+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-24:2012/09/24/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
 &lt;div class="section" id="backend-stack"&gt;
 &lt;h2&gt;Backend&amp;nbsp;Stack&lt;/h2&gt;
 &lt;ul class="simple"&gt;
@@ -8,6 +8,7 @@
 &lt;li&gt;&lt;a class="reference external" href="https://www.varnish-cache.org/"&gt;Varnish&amp;nbsp;Cache&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://nginx.org/"&gt;nginx&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://expressionengine.com/"&gt;Expression&amp;nbsp;Engine&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://www.php.net/"&gt;&lt;span class="caps"&gt;PHP&lt;/span&gt;&lt;/a&gt; (&lt;span class="caps"&gt;FPM&lt;/span&gt;, with &lt;span class="caps"&gt;APC&lt;/span&gt;&amp;nbsp;enabled)&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://www.gluster.org/"&gt;GlusterFS&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://aws.amazon.com/rds/"&gt;Amazon&amp;nbsp;&lt;span class="caps"&gt;RDS&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
@@ -21,7 +22,7 @@ it&amp;#8217;s more than a &lt;span class="caps"&gt;CMS&lt;/span&gt;, it&amp;#82
 &lt;span class="caps"&gt;SQL&lt;/span&gt; queries to generate content, especially when the content is used to create a &lt;span class="caps"&gt;JSON&lt;/span&gt; &lt;span class="caps"&gt;API&lt;/span&gt; with hundreds of records rather than
 single pages, such as would be seen in a vanilla &lt;span class="caps"&gt;CMS&lt;/span&gt; with &amp;#8220;page&amp;#8221; objects. EAVs also have trouble taking advantage of database
 joins, which are almost a necessity when building complex queries that need to perform well. We were faced with a serious
-problem since our &lt;span class="caps"&gt;API&lt;/span&gt; requests were taking close to 20 seconds to complete when the site was under&amp;nbsp;load.&lt;/p&gt;
+problem since our &lt;span class="caps"&gt;API&lt;/span&gt; requests were taking close to &lt;strong&gt;20 seconds&lt;/strong&gt; to complete when the site was under&amp;nbsp;load.&lt;/p&gt;
 &lt;p&gt;We used &lt;a class="reference external" href="http://aws.amazon.com/rds/"&gt;Amazon &lt;span class="caps"&gt;RDS&lt;/span&gt;&lt;/a&gt; for the database. Nothing special there, you pay a little more to have Amazon manage the database &lt;span class="caps"&gt;OS&lt;/span&gt;, optimization,
 replication, and you get some nice tools to do point-in-time restoration. If you&amp;#8217;re using MySQL and &lt;span class="caps"&gt;EC2&lt;/span&gt;, it&amp;#8217;s a&amp;nbsp;no-brainer.&lt;/p&gt;
 &lt;p&gt;All components of the cluster have full&amp;nbsp;redundancy:&lt;/p&gt;
@@ -36,7 +37,7 @@ replication, and you get some nice tools to do point-in-time restoration. If you
 &lt;p&gt;A common issue when your webapp outgrows a single server setup is how to distribute assets among the servers. There are several
 ways to solve this including directing all content-generating traffic to a single server and replicating the assets via rsync. I&amp;#8217;ve
 found that using &lt;a class="reference external" href="http://www.gluster.org/"&gt;GlusterFS&lt;/a&gt; provides a very robust and reliable system for file&amp;nbsp;replication.&lt;/p&gt;
-&lt;p&gt;GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and writes
+&lt;p&gt;GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and file writes
 to that share are immediately replicated to both GlusterFS servers. Every asset stored in Gluster essentially has two physical copies, one
 on each file server. If one of them goes down, the GlusterFS client (on the web-servers) is smart enough to switch to the other
 server. When the server comes back up, it heals itself from the active&amp;nbsp;server.&lt;/p&gt;
@@ -50,9 +51,13 @@ make. This means offloading static asset requests for images and &lt;span class=
 the client through CloudFront and it caches your content for you. Once it&amp;#8217;s on CloudFront, it never has to hit your servers again. &lt;span class="caps"&gt;CF&lt;/span&gt;
 also has the very cool benefit of distributing your content around the world, so users get routed to a server that&amp;#8217;s close to them&amp;nbsp;geographically.&lt;/p&gt;
 &lt;p&gt;Keeping &lt;em&gt;page&lt;/em&gt; requests from hitting the server was a bit tougher. We use Amazon&amp;#8217;s Elastic Load Balancer to transparently proxy requests
-to one of four web servers. On those web servers, we use &lt;a class="reference external" href="https://www.varnish-cache.org/"&gt;Varnish Cache&lt;/a&gt; as a front-end cache. Varnish works as a caching proxy. Once a page is requested
+to one of four web servers. On those web servers, &lt;a class="reference external" href="https://www.varnish-cache.org/"&gt;Varnish Cache&lt;/a&gt; sits in front of nginx and works as a caching proxy. Once a page is requested
 and rendered, it&amp;#8217;s stored in &lt;span class="caps"&gt;RAM&lt;/span&gt; for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
 since &lt;span class="caps"&gt;PHP&lt;/span&gt; is not invoked and data does not have to be retrieved from the database, it can be served directly from&amp;nbsp;&lt;span class="caps"&gt;RAM&lt;/span&gt;.&lt;/p&gt;
+&lt;pre class="literal-block"&gt;
+uncached request: client -&amp;gt; Varnish -&amp;gt; nginx -&amp;gt; PHP -&amp;gt; database
+  cached request: client -&amp;gt; Varnish (RAM cache)
+&lt;/pre&gt;
 &lt;p&gt;Since our &lt;span class="caps"&gt;API&lt;/span&gt; responses take so long to generate we have to be very aggressive with our caching.  The solution here was to &amp;#8220;warm&amp;#8221; the
 cache automatically, making sure that no client traffic ever hits uncached&amp;nbsp;content.&lt;/p&gt;
 &lt;p&gt;Note that FuelStream has a huge benefit over most web apps since it&amp;#8217;s session-less. There is no concept of a user-login or history.
