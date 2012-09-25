@@ -4,14 +4,7 @@
 {% endblock %}
 {% block content %}
 <section id="content" class="body">
-  <aside>
-    <h2>Recent</h2>
-    {%- for article in articles %}
-      {{ article.date.strftime("%b %d") }}
-      &middot;
-      <a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark" title="Permalink to {{ article.title}}">{{ article.title }}</a>
-    {%- endfor %}
-  </aside>
+  {% include "aside.html" %}
 
   <article class="hentry">
     <header>
@@ -20,9 +13,9 @@
            title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a></h2>
     </header>
     <section class="post-info">
-      <abbr class="published" title="{{ article.date.isoformat() }}">
+      <time class="published" title="{{ article.date.isoformat() }}">
         {{ article.locale_date }}
-      </abbr>
+      </time>
     </section><!-- /.post-info -->
     <div class="entry-content">
       {{ article.content }}

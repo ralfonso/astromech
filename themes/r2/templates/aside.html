@@ -1,0 +1,10 @@
+<aside>
+  <h2>Recent</h2>
+  <ul class="recent-articles">
+  {%- for article in articles %}
+    <li>{{ article.date.strftime("%b %d") }}
+    &middot;
+    <a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark" title="Permalink to {{ article.title}}">{{ article.title }}</a></li>
+  {%- endfor %}
+  </ul>
+</aside>

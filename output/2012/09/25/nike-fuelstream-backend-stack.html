@@ -1,4 +1,15 @@
 <!DOCTYPE html>
+<!--
+       .-""-.
+      /[] _ _\
+     _|_o_LII|_
+    / | ==== | \
+    |_| ==== |_|
+     ||" ||  ||
+     ||LI  o ||
+     ||'----'||
+    /__|    |__\
+-->
 <html lang="en">
 <head>
   
@@ -33,30 +44,32 @@
   
 <section id="content" class="body">
   <aside>
-    <h2>Recent</h2>
-      Sep 24
-      &middot;
-      <a href="../../.././2012/09/24/nike-fuelstream-backend-stack.html" rel="bookmark" title="Permalink to Nike+ FuelStream Backend&nbsp;Stack">Nike+ FuelStream Backend&nbsp;Stack</a>
-  </aside>
+  <h2>Recent</h2>
+  <ul class="recent-articles">
+    <li>Sep 25
+    &middot;
+    <a href="../../.././2012/09/25/nike-fuelstream-backend-stack.html" rel="bookmark" title="Permalink to Nike+ FuelStream Backend&nbsp;Stack">Nike+ FuelStream Backend&nbsp;Stack</a></li>
+  </ul>
+</aside>
 
   <article class="hentry">
     <header>
       <h2 class="entry-title">
-        <a href="../../.././2012/09/24/nike-fuelstream-backend-stack.html" rel="bookmark"
+        <a href="../../.././2012/09/25/nike-fuelstream-backend-stack.html" rel="bookmark"
            title="Permalink to Nike+ FuelStream Backend Stack">Nike+ FuelStream Backend&nbsp;Stack</a></h2>
     </header>
     <section class="post-info">
-      <abbr class="published" title="2012-09-24T23:13:19">
-        Mon 24 September 2012
-      </abbr>
+      <time class="published" title="2012-09-25T02:14:01">
+        Tue 25 September 2012
+      </time>
     </section><!-- /.post-info -->
     <div class="entry-content">
       <p>This is a companion to <a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html">Thomas Reynolds&#8217;</a> article outlining the front-end stack for The <a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream">Nike+ FuelStream</a>&nbsp;site.</p>
 <div class="section" id="backend-stack">
 <h2>Backend&nbsp;Stack</h2>
 <ul class="simple">
-<li><a class="reference external" href="http://aws.amazon.com/elasticloadbalancing/">Amazon Elastic Load&nbsp;Balancer</a></li>
-<li><a class="reference external" href="http://aws.amazon.com/cloudfront/">Amazon&nbsp;CloudFront</a></li>
+<li><a class="reference external" href="http://aws.amazon.com/elasticloadbalancing/">Amazon Elastic Load Balancer</a>&nbsp;(<span class="caps">ELB</span>)</li>
+<li><a class="reference external" href="http://aws.amazon.com/cloudfront/">Amazon CloudFront</a>&nbsp;(<span class="caps">CF</span>)</li>
 <li><a class="reference external" href="https://www.varnish-cache.org/">Varnish&nbsp;Cache</a></li>
 <li><a class="reference external" href="http://nginx.org/">nginx</a></li>
 <li><a class="reference external" href="http://expressionengine.com/">Expression&nbsp;Engine</a></li>
@@ -107,19 +120,20 @@ to one of four web servers. On those web servers, <a class="reference external" 
 and rendered, it&#8217;s stored in <span class="caps">RAM</span> for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
 since <span class="caps">PHP</span> is not invoked and data does not have to be retrieved from the database, it can be served directly from&nbsp;<span class="caps">RAM</span>.</p>
 <pre class="literal-block">
-uncached request: client -&gt; Varnish -&gt; nginx -&gt; PHP -&gt; database
-  cached request: client -&gt; Varnish (RAM cache)
+uncached request: client -&gt; ELB -&gt; Varnish -&gt; nginx -&gt; PHP -&gt; database
+  cached request: client -&gt; ELB -&gt; Varnish (RAM cache)
 </pre>
 <p>Since our <span class="caps">API</span> responses take so long to generate we have to be very aggressive with our caching.  The solution here was to &#8220;warm&#8221; the
 cache automatically, making sure that no client traffic ever hits uncached&nbsp;content.</p>
-<p>Note that FuelStream has a huge benefit over most web apps since it&#8217;s session-less. There is no concept of a user-login or history.
+<p>Note that FuelStream has a huge benefit over most web apps since it&#8217;s session-less. There is no use of user-login or history.
 Whenever you introduce sessions to an application, caching becomes much more&nbsp;difficult.</p>
 </div>
 <div class="section" id="cache-warming">
 <h2>Cache&nbsp;Warming</h2>
 <p>To warm the cache, we created a script that runs at an interval lower than the cache&#8217;s timeout value. This script makes a special <span class="caps">HTTP</span>
-request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. Only the warming script
-gets to see the slow loading times. It&#8217;s an emotionless robot that constantly surfs the site and makes sure the cache is minty&nbsp;fresh.</p>
+request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. (using the <tt class="docutils literal">req.hash_always_miss</tt>
+variable in Varnish <span class="caps">VCL</span>) Only the warming script gets to see the slow loading times. It&#8217;s an emotionless robot that constantly
+surfs the site and makes sure the cache is minty&nbsp;fresh.</p>
 </div>
 <div class="section" id="conclusion">
 <h2>Conclusion</h2>

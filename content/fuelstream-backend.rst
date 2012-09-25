@@ -5,8 +5,8 @@ This is a companion to `Thomas Reynolds'`_ article outlining the front-end stack
 
 Backend Stack
 -------------
-* `Amazon Elastic Load Balancer`_
-* `Amazon CloudFront`_
+* `Amazon Elastic Load Balancer`_ (ELB)
+* `Amazon CloudFront`_ (CF)
 * `Varnish Cache`_
 * nginx_
 * `Expression Engine`_
@@ -64,20 +64,21 @@ since PHP is not invoked and data does not have to be retrieved from the databas
 
 :: 
 
-    uncached request: client -> Varnish -> nginx -> PHP -> database
-      cached request: client -> Varnish (RAM cache)
+    uncached request: client -> ELB -> Varnish -> nginx -> PHP -> database
+      cached request: client -> ELB -> Varnish (RAM cache)
 
 Since our API responses take so long to generate we have to be very aggressive with our caching.  The solution here was to "warm" the 
 cache automatically, making sure that no client traffic ever hits uncached content.
 
-Note that FuelStream has a huge benefit over most web apps since it's session-less. There is no concept of a user-login or history.
+Note that FuelStream has a huge benefit over most web apps since it's session-less. There is no use of user-login or history.
 Whenever you introduce sessions to an application, caching becomes much more difficult.
 
 Cache Warming
 -------------
 To warm the cache, we created a script that runs at an interval lower than the cache's timeout value. This script makes a special HTTP
-request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. Only the warming script
-gets to see the slow loading times. It's an emotionless robot that constantly surfs the site and makes sure the cache is minty fresh.
+request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. (using the ``req.hash_always_miss`` 
+variable in Varnish VCL) Only the warming script gets to see the slow loading times. It's an emotionless robot that constantly 
+surfs the site and makes sure the cache is minty fresh.
 
 Conclusion
 ----------

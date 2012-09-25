@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/all.atom.xml" rel="self"></link><id>/</id><updated>2012-09-24T23:13:19+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/24/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-24T23:13:19+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-24:2012/09/24/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Astromech</title><link href="/" rel="alternate"></link><link href="/feeds/all.atom.xml" rel="self"></link><id>/</id><updated>2012-09-25T02:14:01+02:00</updated><entry><title>Nike+ FuelStream Backend Stack</title><link href="/2012/09/25/nike-fuelstream-backend-stack.html" rel="alternate"></link><updated>2012-09-25T02:14:01+02:00</updated><author><name>Ryan Roemmich</name></author><id>tag:,2012-09-25:2012/09/25/nike-fuelstream-backend-stack.html</id><summary type="html">&lt;p&gt;This is a companion to &lt;a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html"&gt;Thomas Reynolds&amp;#8217;&lt;/a&gt; article outlining the front-end stack for The &lt;a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream"&gt;Nike+ FuelStream&lt;/a&gt;&amp;nbsp;site.&lt;/p&gt;
 &lt;div class="section" id="backend-stack"&gt;
 &lt;h2&gt;Backend&amp;nbsp;Stack&lt;/h2&gt;
 &lt;ul class="simple"&gt;
-&lt;li&gt;&lt;a class="reference external" href="http://aws.amazon.com/elasticloadbalancing/"&gt;Amazon Elastic Load&amp;nbsp;Balancer&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a class="reference external" href="http://aws.amazon.com/cloudfront/"&gt;Amazon&amp;nbsp;CloudFront&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://aws.amazon.com/elasticloadbalancing/"&gt;Amazon Elastic Load Balancer&lt;/a&gt;&amp;nbsp;(&lt;span class="caps"&gt;ELB&lt;/span&gt;)&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://aws.amazon.com/cloudfront/"&gt;Amazon CloudFront&lt;/a&gt;&amp;nbsp;(&lt;span class="caps"&gt;CF&lt;/span&gt;)&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="https://www.varnish-cache.org/"&gt;Varnish&amp;nbsp;Cache&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://nginx.org/"&gt;nginx&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a class="reference external" href="http://expressionengine.com/"&gt;Expression&amp;nbsp;Engine&lt;/a&gt;&lt;/li&gt;
@@ -55,19 +55,20 @@ to one of four web servers. On those web servers, &lt;a class="reference externa
 and rendered, it&amp;#8217;s stored in &lt;span class="caps"&gt;RAM&lt;/span&gt; for a set amount of time, regardless of who made the initial request. This makes subsequent requests extremely fast
 since &lt;span class="caps"&gt;PHP&lt;/span&gt; is not invoked and data does not have to be retrieved from the database, it can be served directly from&amp;nbsp;&lt;span class="caps"&gt;RAM&lt;/span&gt;.&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
-uncached request: client -&amp;gt; Varnish -&amp;gt; nginx -&amp;gt; PHP -&amp;gt; database
-  cached request: client -&amp;gt; Varnish (RAM cache)
+uncached request: client -&amp;gt; ELB -&amp;gt; Varnish -&amp;gt; nginx -&amp;gt; PHP -&amp;gt; database
+  cached request: client -&amp;gt; ELB -&amp;gt; Varnish (RAM cache)
 &lt;/pre&gt;
 &lt;p&gt;Since our &lt;span class="caps"&gt;API&lt;/span&gt; responses take so long to generate we have to be very aggressive with our caching.  The solution here was to &amp;#8220;warm&amp;#8221; the
 cache automatically, making sure that no client traffic ever hits uncached&amp;nbsp;content.&lt;/p&gt;
-&lt;p&gt;Note that FuelStream has a huge benefit over most web apps since it&amp;#8217;s session-less. There is no concept of a user-login or history.
+&lt;p&gt;Note that FuelStream has a huge benefit over most web apps since it&amp;#8217;s session-less. There is no use of user-login or history.
 Whenever you introduce sessions to an application, caching becomes much more&amp;nbsp;difficult.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="cache-warming"&gt;
 &lt;h2&gt;Cache&amp;nbsp;Warming&lt;/h2&gt;
 &lt;p&gt;To warm the cache, we created a script that runs at an interval lower than the cache&amp;#8217;s timeout value. This script makes a special &lt;span class="caps"&gt;HTTP&lt;/span&gt;
-request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. Only the warming script
-gets to see the slow loading times. It&amp;#8217;s an emotionless robot that constantly surfs the site and makes sure the cache is minty&amp;nbsp;fresh.&lt;/p&gt;
+request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. (using the &lt;tt class="docutils literal"&gt;req.hash_always_miss&lt;/tt&gt;
+variable in Varnish &lt;span class="caps"&gt;VCL&lt;/span&gt;) Only the warming script gets to see the slow loading times. It&amp;#8217;s an emotionless robot that constantly
+surfs the site and makes sure the cache is minty&amp;nbsp;fresh.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="conclusion"&gt;
 &lt;h2&gt;Conclusion&lt;/h2&gt;
