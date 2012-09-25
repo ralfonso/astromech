@@ -41,7 +41,7 @@
     <li><article class="hentry">    
       <header> <h2 class="entry-title"><a href="./2012/09/24/fuelstream-backend-stack.html" rel="bookmark" title="Permalink to Fuelstream Backend Stack">Fuelstream Backend Stack</a></h2> </header>
       <section class="post-info">
-        <abbr class="published" title="2012-09-24T19:40:31"> Mon 24 September 2012 </abbr>
+        <abbr class="published" title="2012-09-24T21:24:56"> Mon 24 September 2012 </abbr>
       </section>
       <div class="entry-content"> <p>This is a companion to <a class="reference external" href="http://awardwinningfjords.com/2012/09/23/fuelstream.html">Thomas Reynolds'</a> article talking about the front-end stack for The <a class="reference external" href="http://gameonworld.nike.com/#en_US/fuelstream">Nike Fuelstream</a> site.</p>
 <div class="section" id="backend-stack">
@@ -84,12 +84,12 @@ sure that no client traffic ever hits uncached content.</p>
 <div class="section" id="cache-warming">
 <h2>Cache Warming</h2>
 <p>To warm the cache, we created a script that runs at an interval lower than the cache's timeout value. This script makes a special HTTP
-request to the Varnish cache servers, telling them to do an in-place replacement of the cached content. It's an emotionless robot that
-constantly surfs the site and makes sure the cache is minty fresh.</p>
+request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. Only the warming script
+gets to see the slow loading times. It's an emotionless robot that constantly surfs the site and makes sure the cache is minty fresh.</p>
 </div>
 <div class="section" id="conclusion">
 <h2>Conclusion</h2>
-<p>This setup means that a normal request from a user viewing the FuelStream will <em>never</em> have to view uncached content.
+<p>This setup means that a normal request from a user viewing the Fuelstream will <em>never</em> have to view uncached content.
 Response times went from nearly ten seconds under load to 100ms with the cache enabled.</p>
 </div>
  </div><!-- /.entry-content -->

@@ -46,12 +46,12 @@ sure that no client traffic ever hits uncached content.
 Cache Warming
 -------------
 To warm the cache, we created a script that runs at an interval lower than the cache's timeout value. This script makes a special HTTP
-request to the Varnish cache servers, telling them to do an in-place replacement of the cached content. It's an emotionless robot that
-constantly surfs the site and makes sure the cache is minty fresh.
+request to the Varnish cache servers, telling them to do an in-place replacement of the cached content from the database. Only the warming script
+gets to see the slow loading times. It's an emotionless robot that constantly surfs the site and makes sure the cache is minty fresh.
 
 Conclusion
 ----------
-This setup means that a normal request from a user viewing the FuelStream will *never* have to view uncached content.
+This setup means that a normal request from a user viewing the Fuelstream will *never* have to view uncached content.
 Response times went from nearly ten seconds under load to 100ms with the cache enabled.
 
 .. _Thomas Reynolds': http://awardwinningfjords.com/2012/09/23/fuelstream.html
