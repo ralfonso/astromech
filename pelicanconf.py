@@ -26,3 +26,5 @@ DIRECT_TEMPLATES = ('index', )
 DEFAULT_PAGINATION = False
 
 THEME = './themes/r2'
+
+TYPOGRIFY = True

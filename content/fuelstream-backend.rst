@@ -1,7 +1,7 @@
-Fuelstream Backend Stack
-========================
+Nike+ FuelStream Backend Stack
+==============================
 
-This is a companion to `Thomas Reynolds'`_ article talking about the front-end stack for The `Nike Fuelstream`_ site.
+This is a companion to `Thomas Reynolds'`_ article outlining the front-end stack for The `Nike+ FuelStream`_ site.
 
 Backend Stack
 -------------
@@ -10,38 +10,62 @@ Backend Stack
 * `Varnish Cache`_
 * nginx_
 * `Expression Engine`_
+* `GlusterFS`_
+* `Amazon RDS`_
 
 Overview
 --------
-
-The Fuelstream front-end gets its content from a JSON API powered by `Expression Engine`_. EE is a CMS built on PHP and CodeIgniter.
+The FuelStream front-end gets its content from a JSON API powered by `Expression Engine`_. EE is a CMS built on PHP and CodeIgniter.
 It provides a very powerful content-entry system with the ability to model data directly through the admin. This means that's
 it's more than a CMS, it's an easy-to-provision PHP back-end system.
 
-ExpressionEngine's performance isn't exceptional. It uses an EAV_, which provides plenty of flexibility, but requires lots of
-SQL queries to generate content, especially
-when the content is used to create a JSON API with hundreds of records rather than single pages, such as would be seen in a vanilla
-CMS with "page" objects. EAVs also have trouble taking advantage of database joins, which are almost a necessity when building
-complex queries that need to perform well.
+ExpressionEngine's performance is not exceptional. It uses an EAV_, which provides plenty of flexibility, but requires lots of
+SQL queries to generate content, especially when the content is used to create a JSON API with hundreds of records rather than 
+single pages, such as would be seen in a vanilla CMS with "page" objects. EAVs also have trouble taking advantage of database 
+joins, which are almost a necessity when building complex queries that need to perform well. We were faced with a serious
+problem since our API requests were taking close to 20 seconds to complete when the site was under load.
+
+We used `Amazon RDS`_ for the database. Nothing special there, you pay a little more to have Amazon manage the database OS, optimization, 
+replication, and you get some nice tools to do point-in-time restoration. If you're using MySQL and EC2, it's a no-brainer.
+
+All components of the cluster have full redundancy:
+
+- 4 web/application servers (Varnish, nginx, PHP)
+- 2 file servers (GlusterFS)
+- The built-in redundancy and health-checking of Cloudfront, ELB, and RDS
+
+Distributing Assets
+-------------------
+A common issue when your webapp outgrows a single server setup is how to distribute assets among the servers. There are several
+ways to solve this including directing all content-generating traffic to a single server and replicating the assets via rsync. I've
+found that using `GlusterFS`_ provides a very robust and reliable system for file replication.
+
+GlusterFS is very cool.  Two servers in the cluster do nothing but store files. The web-servers have a network filesystem share and writes
+to that share are immediately replicated to both GlusterFS servers. Every asset stored in Gluster essentially has two physical copies, one
+on each file server. If one of them goes down, the GlusterFS client (on the web-servers) is smart enough to switch to the other
+server. When the server comes back up, it heals itself from the active server. 
+
+Of course, all of this redundancy and reliability comes with a huge cost. File access performance is greatly reduced. There are some efforts to 
+improve the client-side caching that Gluster does, but I've found that it's still lacking. 
 
 Performance Improvements
 ------------------------
-
-The first step to take when trying to improve performance is to simply reduce the number of requests to the server that the clients
-make. This means offloading static asset requests for images and CSS to a CDN.  Amazon CloudFront makes this very easy. You just send
+The easiest way to improve performance of a web app is to simply reduce the number of requests to the server that the clients
+make. This means offloading static asset requests for images and CSS to a CDN.  `Amazon CloudFront`_ makes this very easy. You just send
 the client through CloudFront and it caches your content for you. Once it's on CloudFront, it never has to hit your servers again. CF
-also has the very cool benefit of distributing your content around the world, so users get routing to a server that's close to them,
+also has the very cool benefit of distributing your content around the world, so users get routed to a server that's close to them
 geographically.
 
 Keeping *page* requests from hitting the server was a bit tougher. We use Amazon's Elastic Load Balancer to transparently proxy requests
-to one of four web servers. On those web servers, we use `Varnish Cache`_ to store responses in memory. This means that once a page is requested,
-regardless of the client that requested it, it's stored in RAM for a set amount of time. This makes subsequent requests extremely fast
-since PHP is not invoked and data does not have to be retrieved from the database.
+to one of four web servers. On those web servers, we use `Varnish Cache`_ to store responses in memory. This means that once a page is requested
+and rendered, it's stored in RAM for a set amount of time, regardless of who make the initial request. This makes subsequent requests extremely fast
+since PHP is not invoked and data does not have to be retrieved from the database. 
 
-Varnish's normal mode of operation is similar to CloudFront's. On the first request for an uncached page, it will go to nginx (which
-goes to PHP and retreives from the DB to render the page). Since our API responses take so long to generate (best case is still over four
-seconds per request) we have to be very aggressive with our caching.  The solution here was to "warm" the cache automatically, making
-sure that no client traffic ever hits uncached content.
+Since our API responses take so long to generate we have to be very aggressive with our caching.  The solution here was to "warm" the 
+cache automatically, making sure that no client traffic ever hits uncached content.
+
+Note that FuelStream has a huge benefit over most web apps since it's session-less. There is no concept of a user-login or history.
+Whenever you introduce sessions to an application, caching becomes much more difficult.
 
 Cache Warming
 -------------
@@ -51,14 +75,16 @@ gets to see the slow loading times. It's an emotionless robot that constantly su
 
 Conclusion
 ----------
-This setup means that a normal request from a user viewing the Fuelstream will *never* have to view uncached content.
-Response times went from nearly ten seconds under load to 100ms with the cache enabled.
+This setup means that a normal API request from a user viewing the FuelStream will *never* have to view uncached content.
+Response times went from 10-20 seconds under load to 100ms or less with the cache enabled.
 
 .. _Thomas Reynolds': http://awardwinningfjords.com/2012/09/23/fuelstream.html
-.. _Nike Fuelstream: http://gameonworld.nike.com/#en_US/fuelstream
+.. _Nike+ FuelStream: http://gameonworld.nike.com/#en_US/fuelstream
 .. _Expression Engine: http://expressionengine.com/
 .. _EAV: http://en.wikipedia.org/wiki/Entity%E2%80%93attribute%E2%80%93value_model
 .. _Varnish Cache: https://www.varnish-cache.org/
 .. _nginx: http://nginx.org/
+.. _GlusterFS: http://www.gluster.org/
 .. _Amazon CloudFront: http://aws.amazon.com/cloudfront/
 .. _Amazon Elastic Load Balancer: http://aws.amazon.com/elasticloadbalancing/
+.. _Amazon RDS: http://aws.amazon.com/rds/
