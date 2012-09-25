@@ -27,4 +27,7 @@ DEFAULT_PAGINATION = False
 
 THEME = './themes/r2'
 
+FEED_ATOM = False
+CATEGORY_FEED_ATOM = False
+
 TYPOGRIFY = True
